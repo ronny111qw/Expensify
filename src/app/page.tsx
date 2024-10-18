@@ -1,101 +1,72 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import React, { useState } from 'react'
+import { Calculator, TrendingUp, DollarSign, LineChart, Globe } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import RateCalculator from './components/RateCalculator'
+import MarketTrends from './components/MarketTrends'
+import ClientBudgetComparison from './components/ClientBudgetComparison'
+import IncomeExpenseTracker from './components/IncomeExpenseTracker'
+import RateOptimizationTips from './components/RateOptimizationTips'
+
+export default function Component() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <header className="bg-primary text-primary-foreground p-4">
+        <div className="container mx-auto">
+          <h1 className="text-2xl font-bold">Freelancer Rate Calculator</h1>
         </div>
+      </header>
+      <main className="container mx-auto p-4">
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle>Freelancer Tools</CardTitle>
+            <CardDescription>Calculate rates, track income, and optimize your freelance business</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="calculator" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="calculator" className="flex items-center">
+                  <Calculator className="mr-2 h-4 w-4" />
+                  Calculator
+                </TabsTrigger>
+                <TabsTrigger value="trends" className="flex items-center">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Market Trends
+                </TabsTrigger>
+                <TabsTrigger value="budget" className="flex items-center">
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Budget Comparison
+                </TabsTrigger>
+                <TabsTrigger value="tracker" className="flex items-center">
+                  <LineChart className="mr-2 h-4 w-4" />
+                  Income Tracker
+                </TabsTrigger>
+                <TabsTrigger value="tips" className="flex items-center">
+                  <Globe className="mr-2 h-4 w-4" />
+                  Optimization Tips
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="calculator">
+                <RateCalculator />
+              </TabsContent>
+              <TabsContent value="trends">
+                <MarketTrends />
+              </TabsContent>
+              <TabsContent value="budget">
+                <ClientBudgetComparison />
+              </TabsContent>
+              <TabsContent value="tracker">
+                <IncomeExpenseTracker />
+              </TabsContent>
+              <TabsContent value="tips">
+                <RateOptimizationTips />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
-  );
+  )
 }
