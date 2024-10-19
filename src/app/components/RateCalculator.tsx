@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Calculator, Info, Save, Download, RotateCcw, DollarSign } from "lucide-react"
+import { Calculator, Info, Save, Download, RotateCcw, DollarSign, Trash2 } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface RateHistory {
@@ -316,6 +316,14 @@ export default function RateCalculator() {
     )
   }
 
+  const deleteCalculation = (index : number) => {
+    const updatedCalculations = savedCalculations.filter((_, i) => i !== index)
+    setSavedCalculations(updatedCalculations)
+    localStorage.setItem('savedCalculations', JSON.stringify(updatedCalculations))
+  }
+
+
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
@@ -492,6 +500,15 @@ export default function RateCalculator() {
                   >
                     Load
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteCalculation(index)}
+                    className="hover:bg-red-100 hover:text-red-600"
+                  >
+                     <Trash2 className="w-4 h-4" />
+                  </Button>
+
                 </div>
               ))}
             </div>
