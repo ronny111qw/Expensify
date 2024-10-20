@@ -386,11 +386,24 @@ export default function IncomeExpenseTracker() {
                           ))}
                         </Pie>
                         <Tooltip 
-                          formatter={(value, name) => [
-                            formatAmount(value as number, name.split('(')[1].split(')')[0].trim()), 
-                            name
-                          ]}
-                        />
+  formatter={(value, name) => {
+    // Check if 'name' is a string before using split
+    let formattedName = name;
+    
+    if (typeof name === 'string') {
+      // Ensure the name is a string before using split
+      const matches = name.match(/\(([^)]+)\)/);
+      if (matches && matches[1]) {
+        formattedName = matches[1].trim();
+      }
+    }
+    
+    return [
+      formatAmount(value as number, formattedName), 
+      name
+    ];
+  }}
+/> 
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
