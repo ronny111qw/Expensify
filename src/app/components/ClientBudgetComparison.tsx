@@ -22,10 +22,12 @@ interface CurrencyInfo {
   }
 }
 
+type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'INR' | 'AUD' | 'CAD' | 'JPY';
+
 export default function ClientBudgetComparison() {
   const [clientBudget, setClientBudget] = useState<string>('')
   const [projectHours, setProjectHours] = useState<string>('')
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('USD')
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>('USD')
   const [comparison, setComparison] = useState<{
     message: string;
     type: 'error' | 'warning' | 'success';
@@ -36,7 +38,7 @@ export default function ClientBudgetComparison() {
   } | null>(null)
   const [isCalculating, setIsCalculating] = useState(false)
 
-  const currencies: Record<string, CurrencyInfo> = {
+  const currencies: Record<CurrencyCode, CurrencyInfo> = {
     USD: {
       symbol: '$',
       name: 'US Dollar',
@@ -116,7 +118,7 @@ export default function ClientBudgetComparison() {
     }
   }
 
-  const getRateCategory = (hourlyRate: number, currency: string) => {
+  const getRateCategory = (hourlyRate: number, currency: CurrencyCode) => {
     const currencyInfo = currencies[currency]
     const { regionSpecificRates } = currencyInfo
 
@@ -156,7 +158,7 @@ export default function ClientBudgetComparison() {
     }).format(amount)
   }
 
-  const getUSDEquivalent = (amount: number, currency: string) => {
+  const getUSDEquivalent = (amount: number, currency: CurrencyCode) => {
     return amount / currencies[currency].rate
   }
 
@@ -215,20 +217,19 @@ export default function ClientBudgetComparison() {
     // Auto-detect user's currency based on browser locale
     try {
       const userLocale = navigator.language;
-      const userCurrency = new Intl.NumberFormat(userLocale, { 
+      const detectedCurrency = new Intl.NumberFormat(userLocale, { 
         style: 'currency', 
         currency: 'USD' 
       }).resolvedOptions().currency;
 
-      if (currencies[userCurrency]) {
-        setSelectedCurrency(userCurrency);
+      // Check if the detected currency is one we support
+      if (detectedCurrency && detectedCurrency in currencies) {
+        setSelectedCurrency(detectedCurrency as CurrencyCode);
       }
     } catch (error) {
       console.error('Failed to detect user currency:', error);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -258,7 +259,7 @@ export default function ClientBudgetComparison() {
             </Label>
             <Select
               value={selectedCurrency}
-              onValueChange={(value) => {
+              onValueChange={(value: CurrencyCode) => {
                 setSelectedCurrency(value)
                 setComparison(null)
               }}
