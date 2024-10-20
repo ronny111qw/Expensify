@@ -387,12 +387,22 @@ export default function IncomeExpenseTracker() {
                         </Pie>
                         <Tooltip
   formatter={(value, name) => {
-    // Ensure both 'name' and 'value' are strings
-    const formattedName = typeof name === 'string' ? name : name.toString();
-    const formattedValue = typeof value === 'number' ? value.toString() : value;
+    // Check if value is an array or not
+    const numericalValue = Array.isArray(value)
+      ? value[0] // or sum the values if that's appropriate
+      : value;
 
+    // Ensure numericalValue is a number
+    const finalValue = typeof numericalValue === 'string'
+      ? parseFloat(numericalValue) // convert string to number
+      : numericalValue;
+
+    // If finalValue is not a number, handle it accordingly (e.g., default to 0)
+    const safeValue = typeof finalValue === 'number' ? finalValue : 0;
+
+    // Format and return the desired output
     return [
-      formatAmount(formattedValue, formattedName), 
+      formatAmount(safeValue, name.split('(')[1].split(')')[0].trim()),
       name
     ];
   }}
