@@ -38,7 +38,8 @@ export default function ClientBudgetComparison() {
   } | null>(null)
   const [isCalculating, setIsCalculating] = useState(false)
 
-  const currencies: Record<CurrencyCode, CurrencyInfo> = {
+  // Move currencies object inside the component to make it reactive
+  const currencies: Record<CurrencyCode, CurrencyInfo> = React.useMemo(() => ({
     USD: {
       symbol: '$',
       name: 'US Dollar',
@@ -116,7 +117,7 @@ export default function ClientBudgetComparison() {
         aboveAverage: 16200
       }
     }
-  }
+  }), [])
 
   const getRateCategory = (hourlyRate: number, currency: CurrencyCode) => {
     const currencyInfo = currencies[currency]
@@ -229,7 +230,7 @@ export default function ClientBudgetComparison() {
     } catch (error) {
       console.error('Failed to detect user currency:', error);
     }
-  }, []);
+  }, [currencies]); // Added currencies to dependency array
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -343,4 +344,4 @@ export default function ClientBudgetComparison() {
       </div>
     </Card>
   )
-}
+} 
