@@ -214,19 +214,21 @@ export default function ClientBudgetComparison() {
   useEffect(() => {
     // Auto-detect user's currency based on browser locale
     try {
-      const userLocale = navigator.language
+      const userLocale = navigator.language;
       const userCurrency = new Intl.NumberFormat(userLocale, { 
         style: 'currency', 
         currency: 'USD' 
-      }).resolvedOptions().currency
+      }).resolvedOptions().currency;
 
       if (currencies[userCurrency]) {
-        setSelectedCurrency(userCurrency)
+        setSelectedCurrency(userCurrency);
       }
     } catch (error) {
-      console.error('Failed to detect user currency:', error)
+      console.error('Failed to detect user currency:', error);
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -245,7 +247,7 @@ export default function ClientBudgetComparison() {
             </Tooltip>
           </TooltipProvider>
         </CardTitle>
-        <CardDescription className="text-sm sm:text-base">Compare client's budget with regional market rates and get instant feedback</CardDescription>
+        <CardDescription className="text-sm sm:text-base">Compare client&apos;s budget with regional market rates and get instant feedback</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -276,7 +278,7 @@ export default function ClientBudgetComparison() {
           <div className="space-y-2">
             <Label htmlFor="clientBudget" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
-              Client's Budget ({currencies[selectedCurrency].symbol})
+              Client&apos;s Budget ({currencies[selectedCurrency].symbol})
             </Label>
             <Input
               id="clientBudget"

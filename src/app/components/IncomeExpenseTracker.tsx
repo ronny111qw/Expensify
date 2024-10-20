@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon, Trash2, AlertCircle, Download, Filter, TrendingUp, PieChart as PieChartIcon, BarChart as BarChartIcon } from 'lucide-react'
+import { Calendar as CalendarIcon, Trash2, AlertCircle, Download, PieChart as PieChartIcon, BarChart as BarChartIcon } from 'lucide-react'
 
 interface Transaction {
   id: string
@@ -53,7 +53,7 @@ export default function IncomeExpenseTracker() {
     date: new Date(),
     currency: 'USD'
   })
-  const [defaultCurrency, setDefaultCurrency] = useState('USD')
+  const [defaultCurrency] = useState('USD')
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('transactions')

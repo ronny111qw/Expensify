@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react'
 import { motion, useAnimation } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowRight, DollarSign, TrendingUp, Users, BarChart4, Menu, Calculator, CheckCircle } from 'lucide-react'
+import { ArrowRight, DollarSign, TrendingUp, BarChart4, Menu, Calculator, CheckCircle } from 'lucide-react'
 import Link from 'next/link';
 
 const FeatureCard = ({ icon: Icon, title, description }) => (
@@ -113,7 +112,6 @@ export default function LandingPage() {
           </div>
         )}
       </header>
-
       <main className="container mx-auto px-4 py-8 sm:py-16">
         <AnimatedSection>
           <section className="text-center mb-12 sm:mb-16">
@@ -136,7 +134,7 @@ export default function LandingPage() {
             <div>
               <h3 className="text-2xl sm:text-3xl font-bold mb-4">Why Use Expensify</h3>
               <p className="text-base sm:text-lg text-muted-foreground mb-4">
-              Expensify offers a comprehensive platform tailored to help freelancers optimize their earnings. Here's why it's the perfect tool for you:
+              Expensify offers a comprehensive platform tailored to help freelancers optimize their earnings. Here&apos;s why it&apos;s the perfect tool for you:
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li>Calculate your freelance rate based on skill level, location, experience, and financial goals.</li>
@@ -192,7 +190,8 @@ export default function LandingPage() {
           <CardDescription>Graphic Designer</CardDescription>
         </CardHeader>
         <CardContent>
-          "Expensify helped me realize I was undercharging for my services. After adjusting my rates, I'm earning 30% more without losing clients!"
+        &quot;Expensify helped me realize I was undercharging for my services. After adjusting my rates, I&apos;m earning 30% more without losing clients!&quot;
+
         </CardContent>
       </Card>
 
@@ -202,7 +201,7 @@ export default function LandingPage() {
           <CardDescription>Web Developer</CardDescription>
         </CardHeader>
         <CardContent>
-          "The market insights provided by this tool are invaluable. I feel much more confident in my pricing decisions now."
+        &quot;The market insights provided by this tool are invaluable. I feel much more confident in my pricing decisions now.&quot;
         </CardContent>
       </Card>
 
@@ -212,7 +211,7 @@ export default function LandingPage() {
           <CardDescription>Content Writer</CardDescription>
         </CardHeader>
         <CardContent>
-          "I love the easy-to-use interface! It’s made managing my freelance income and rates a breeze."
+        &quot;I love the easy-to-use interface! It&rsquo;s made managing my freelance income and rates a breeze.&quot;
         </CardContent>
       </Card>
     </div>

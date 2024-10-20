@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Calculator, Info, Save, Download, RotateCcw, DollarSign, Trash2 } from "lucide-react"
+import { Calculator, Info, Save, Download, RotateCcw, Trash2 } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface RateHistory {
@@ -143,12 +143,6 @@ export default function RateCalculator() {
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([])
   const [savedCalculations, setSavedCalculations] = useState<SavedCalculation[]>([])
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
-  const [industryInfo, setIndustryInfo] = useState<{
-    baseRate: number;
-    multiplier: number;
-    description: string;
-    skills: string[];
-  } | null>(null)
 
   useEffect(() => {
     // Load saved calculations from localStorage
@@ -160,9 +154,10 @@ export default function RateCalculator() {
 
   useEffect(() => {
     if (industry) {
-      const info = industryData[industry as keyof typeof industryData]
-      setIndustryInfo(info)
-      setSelectedSkills([])
+      const info = industryData[industry as keyof typeof industryData];
+      if (info) {
+        setSelectedSkills([info.skills[0]]);
+      }
     }
   }, [industry])
 
@@ -355,41 +350,6 @@ export default function RateCalculator() {
     link.click()
   }
 
-  const renderIndustrySection = () => {
-    if (!industryInfo) return null;
-
-    return (
-      <div className="col-span-2 mt-4 p-4 bg-secondary/5 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2">Industry Information</h3>
-        <p className="text-sm text-muted-foreground mb-2">{industryInfo.description}</p>
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Base Rate: {formatCurrency(industryInfo.baseRate, currency)}</p>
-          <div>
-            <Label className="text-sm font-medium">Select Relevant Skills:</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {industryInfo.skills.map((skill) => (
-                <Button
-                  key={skill}
-                  variant={selectedSkills.includes(skill) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setSelectedSkills(prev =>
-                      prev.includes(skill)
-                        ? prev.filter(s => s !== skill)
-                        : [...prev, skill]
-                    )
-                  }}
-                >
-                  {skill}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <Card>
@@ -404,7 +364,7 @@ export default function RateCalculator() {
               <Select value={skillLevel} onValueChange={setSkillLevel}>
                 <SelectTrigger id="skillLevel">
                   <SelectValue placeholder="Select skill level" />
-                </SelectTrigger>
+                  </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="beginner">Beginner</SelectItem>
                   <SelectItem value="intermediate">Intermediate</SelectItem>
@@ -418,14 +378,7 @@ export default function RateCalculator() {
 
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
-              <Select value={industry} onValueChange={(value) => {
-                setIndustry(value);
-                // Update selectedSkills when industry changes
-                const industryInfo = industryData[value as keyof typeof industryData];
-                if (industryInfo) {
-                  setSelectedSkills([industryInfo.skills[0]]); // Set first skill as default
-                }
-              }}>
+              <Select value={industry} onValueChange={setIndustry}>
                 <SelectTrigger id="industry">
                   <SelectValue placeholder="Select industry" />
                 </SelectTrigger>
@@ -441,8 +394,6 @@ export default function RateCalculator() {
                 <span className="text-sm text-red-500">{errors.industry}</span>
               )}
             </div>
-
-            
 
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
@@ -537,7 +488,6 @@ export default function RateCalculator() {
             </div>
           </div>
 
-       
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-end">
             <Button variant="outline" onClick={resetForm} className="w-full sm:w-auto">
               <RotateCcw className="w-4 h-4 mr-2" />

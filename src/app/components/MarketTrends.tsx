@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart,} from 'recharts'
 import { TrendingUp, DollarSign, Calendar, Map, LoaderIcon } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -17,6 +17,7 @@ interface TrendData {
   dataScience: number
   uiDesign: number
   devOps: number
+  [key: string]: string | number
 }
 
 interface MarketRateResponse {
@@ -27,12 +28,21 @@ interface MarketRateResponse {
   insights: string[]
 }
 
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{
+    name: string
+    value: number
+    color: string
+  }>
+  label?: string
+}
+
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '')
 
-
 const RATE_LIMITS = {
-  min: 20,   // Minimum realistic hourly rate
-  max: 250,  // Maximum realistic hourly rate
+  min: 20,
+  max: 250,
   defaults: {
     webDev: 75,
     mobileDev: 85,
@@ -43,17 +53,10 @@ const RATE_LIMITS = {
 };
 
 const normalizeRate = (rate: number): number => {
-  // If rate is unrealistically high (likely in thousands/year), convert to hourly
   if (rate > RATE_LIMITS.max) {
-    // Assume it's yearly salary, convert to hourly
-    // Based on 2080 working hours per year (40 hours * 52 weeks)
     rate = rate / 2080;
   }
-  
-  // Ensure rate is within realistic bounds
   rate = Math.min(Math.max(rate, RATE_LIMITS.min), RATE_LIMITS.max);
-  
-  // Round to nearest dollar
   return Math.round(rate);
 };
 
@@ -62,8 +65,6 @@ const extractJSONFromText = (text: string): MarketRateResponse => {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      
-      // Normalize all rates
       const normalizedRates = Object.entries(parsed.rates).reduce((acc, [key, value]) => ({
         ...acc,
         [key]: normalizeRate(Number(value))
@@ -92,15 +93,6 @@ const extractJSONFromText = (text: string): MarketRateResponse => {
     };
   }
 };
-
-const DEFAULT_INSIGHTS = [
-  "Rising demand for AI/ML integration skills across all developer roles",
-  "Remote work continues to drive competitive rates globally",
-  "Full-stack developers with cloud expertise command premium rates",
-  "Growing emphasis on cybersecurity skills across DevOps roles",
-  "Increased demand for cross-platform mobile development",
-  "UI/UX professionals with product strategy skills seeing higher rates"
-];
 
 const generateLocationSpecificInsights = (location: string): string[] => {
   switch (location.toLowerCase()) {
@@ -139,8 +131,40 @@ export default function MarketTrends() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [marketInsights, setMarketInsights] = useState<string[]>([])
-  
-  const fetchMarketRates = async (location: string) => {
+
+  const generateHistoricalData = useCallback((currentRates: { [key: string]: number }): TrendData[] => {
+    const months = selectedTimeframe === '12m' ? 12 : 6
+    const data: TrendData[] = []
+    
+    for (let i = 0; i < months; i++) {
+      const month = new Date()
+      month.setMonth(month.getMonth() - (months - i - 1))
+      
+      const monthData: TrendData = {
+        month: month.toLocaleString('default', { month: 'short' }),
+        webDev: 0,
+        mobileDev: 0,
+        dataScience: 0,
+        uiDesign: 0,
+        devOps: 0
+      }
+      
+      Object.entries(currentRates).forEach(([key, currentRate]) => {
+        const volatility = 0.05
+        const trend = 0.02
+        const randomChange = (Math.random() - 0.5) * 2 * volatility
+        const trendChange = trend * i
+        
+        monthData[key] = Math.round(currentRate * (0.9 + randomChange + trendChange))
+      })
+      
+      data.push(monthData)
+    }
+    
+    return data
+  }, [selectedTimeframe])
+
+  const fetchMarketRates = useCallback(async (location: string) => {
     setLoading(true);
     setError(null);
     
@@ -178,86 +202,34 @@ export default function MarketTrends() {
       const text = response.text();
       
       const data = extractJSONFromText(text);
-      
       const historicalData = generateHistoricalData(data.rates);
       setTrends(historicalData);
       
-      // Combine AI-generated insights with location-specific insights
       const locationInsights = generateLocationSpecificInsights(location);
       const combinedInsights = [...(data.insights || []), ...locationInsights]
-        .filter((insight, index, self) => self.indexOf(insight) === index) // Remove duplicates
-        .slice(0, 5); // Limit to 5 insights
+        .filter((insight, index, self) => self.indexOf(insight) === index)
+        .slice(0, 5);
       
       setMarketInsights(combinedInsights);
       
     } catch (err) {
       console.error('Error fetching market rates:', err);
       setError('Failed to fetch market rates. Using fallback data.');
-      const fallbackData = generateFallbackData();
+      const fallbackData = generateHistoricalData(RATE_LIMITS.defaults);
       setTrends(fallbackData);
       
-      // Use location-specific insights as fallback
       const fallbackInsights = generateLocationSpecificInsights(location);
       setMarketInsights(fallbackInsights);
     } finally {
       setLoading(false);
     }
-  };
-
-
-  // Add rate validation info to the UI
-  const renderRateValidationInfo = () => (
-    <div className="mt-2 text-sm text-muted-foreground">
-      <p>
-        * Hourly rates are normalized to ensure realistic values between ${RATE_LIMITS.min} and ${RATE_LIMITS.max}.
-      </p>
-    </div>
-  );
-
-  const generateHistoricalData = (currentRates: { [key: string]: number }) => {
-    const months = selectedTimeframe === '12m' ? 12 : 6
-    const data: TrendData[] = []
-    
-    for (let i = 0; i < months; i++) {
-      const month = new Date()
-      month.setMonth(month.getMonth() - (months - i - 1))
-      
-      const monthData: any = {
-        month: month.toLocaleString('default', { month: 'short' }),
-      }
-      
-      // Generate historical rates with some variation
-      Object.entries(currentRates).forEach(([key, currentRate]) => {
-        const volatility = 0.05 // 5% maximum change
-        const trend = 0.02 // 2% upward trend per month
-        const randomChange = (Math.random() - 0.5) * 2 * volatility
-        const trendChange = trend * i
-        
-        monthData[key] = Math.round(currentRate * (0.9 + randomChange + trendChange))
-      })
-      
-      data.push(monthData as TrendData)
-    }
-    
-    return data
-  }
-
-  const generateFallbackData = () => {
-    const baseRates = {
-      webDev: 75,
-      mobileDev: 80,
-      dataScience: 90,
-      uiDesign: 70,
-      devOps: 95
-    }
-    return generateHistoricalData(baseRates)
-  }
+  }, [generateHistoricalData])
 
   useEffect(() => {
     fetchMarketRates(selectedLocation)
-  }, [selectedLocation, selectedTimeframe])
+  }, [selectedLocation, selectedTimeframe, fetchMarketRates])
 
-  const chartColors = {
+  const chartColors: Record<string, string> = {
     webDev: "#8884d8",
     mobileDev: "#82ca9d",
     dataScience: "#ffc658",
@@ -269,12 +241,12 @@ export default function MarketTrends() {
     return `$${value}/hr`
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border rounded-lg p-4 shadow-lg">
           <p className="font-bold mb-2">{label}</p>
-          {payload.map((entry: any) => (
+          {payload.map((entry) => (
             <p key={entry.name} style={{ color: entry.color }}>
               {entry.name}: {formatCurrency(entry.value)}
             </p>
@@ -285,41 +257,6 @@ export default function MarketTrends() {
     return null
   }
 
-  const renderChart = () => {
-    const ChartComponent = selectedChart === 'line' ? LineChart : AreaChart
-    
-    return (
-      <ResponsiveContainer width="100%" height={400}>
-        <ChartComponent data={trends}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis 
-            dataKey="month" 
-            tick={{ fill: 'currentColor' }}
-          />
-          <YAxis 
-            tick={{ fill: 'currentColor' }}
-            tickFormatter={formatCurrency}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
-          {Object.entries(chartColors).map(([key, color]) => {
-            const Component = selectedChart === 'line' ? Line : Area
-            return (
-              <Component
-                key={key}
-                type="monotone"
-                dataKey={key}
-                stroke={color}
-                fill={selectedChart === 'area' ? `${color}40` : undefined}
-                name={key.split(/(?=[A-Z])/).join(' ')}
-              />
-            )
-          })}
-        </ChartComponent>
-      </ResponsiveContainer>
-    )
-  }
-
   const calculateAverages = () => {
     if (trends.length === 0) return null
 
@@ -328,8 +265,8 @@ export default function MarketTrends() {
     
     const categories = Object.keys(chartColors)
     return categories.map(category => {
-      const currentRate = latest[category as keyof TrendData]
-      const initialRate = first[category as keyof TrendData]
+      const currentRate = latest[category] as number
+      const initialRate = first[category] as number
       const change = ((currentRate - initialRate) / initialRate) * 100
       
       return {
@@ -339,7 +276,6 @@ export default function MarketTrends() {
       }
     })
   }
-
   
   return (
     <Card className="w-full">
@@ -511,7 +447,7 @@ export default function MarketTrends() {
             * Rates are based on real-time market analysis powered by AI and may vary based on factors 
             such as experience, skills, and specific project requirements.
           </p>
-          {renderRateValidationInfo()}
+          
         </div>
       </CardContent>
     </Card>

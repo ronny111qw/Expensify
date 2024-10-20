@@ -40,7 +40,7 @@ export default function RateOptimizationTips() {
           <CardContent>
             <p>
               Regularly reassess your rates based on your growing experience and the value you provide.
-              Don't be afraid to incrementally increase your rates for new clients as your skills improve.
+              Don&apos;t be afraid to incrementally increase your rates for new clients as your skills improve.
             </p>
           </CardContent>
         </Card>
