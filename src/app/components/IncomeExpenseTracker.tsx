@@ -394,11 +394,16 @@ export default function IncomeExpenseTracker() {
                           ))}
                         </Pie>
                         <Tooltip 
-                          formatter={(value, name) => [
-                            formatAmount(value as number, name.split('(')[1].split(')')[0].trim()), 
-                            name
-                          ]}
-                        />
+  formatter={(value, name) => {
+    if (typeof name === 'string') {
+      return [
+        formatAmount(value as number, name.split('(')[1].split(')')[0].trim()), 
+        name
+      ]
+    }
+    return [formatAmount(value as number, ''), name] // Return a fallback value if `name` isn't a string
+  }}
+/>
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
