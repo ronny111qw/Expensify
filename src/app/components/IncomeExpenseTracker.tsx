@@ -44,6 +44,7 @@ const CURRENCIES = [
   { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' }
 ]
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const formatTooltipValue = (value: number | string | undefined, name: string | number): [string, string | number] => {
   if (typeof name === 'string' && name.includes('(') && name.includes(')')) {
     const currency = name.split('(')[1].split(')')[0].trim()
@@ -51,6 +52,8 @@ const formatTooltipValue = (value: number | string | undefined, name: string | n
   }
   return [value?.toString() || '0', name]
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */
+
 
 export default function IncomeExpenseTracker() {
   const [formData, setFormData] = useState({
