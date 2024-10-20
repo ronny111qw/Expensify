@@ -93,6 +93,43 @@ const extractJSONFromText = (text: string): MarketRateResponse => {
   }
 };
 
+const DEFAULT_INSIGHTS = [
+  "Rising demand for AI/ML integration skills across all developer roles",
+  "Remote work continues to drive competitive rates globally",
+  "Full-stack developers with cloud expertise command premium rates",
+  "Growing emphasis on cybersecurity skills across DevOps roles",
+  "Increased demand for cross-platform mobile development",
+  "UI/UX professionals with product strategy skills seeing higher rates"
+];
+
+const generateLocationSpecificInsights = (location: string): string[] => {
+  switch (location.toLowerCase()) {
+    case 'north-america':
+      return [
+        "Strong demand for cloud-native development skills",
+        "Cybersecurity expertise commanding premium rates",
+        "Growing market for AI/ML specialists"
+      ];
+    case 'europe':
+      return [
+        "Increasing rates for GDPR-compliant development",
+        "High demand for multilingual development teams",
+        "Growing blockchain development market"
+      ];
+    case 'asia':
+      return [
+        "Rising demand for mobile payment integration expertise",
+        "Growing market for cross-border e-commerce solutions",
+        "Increasing rates for cloud migration specialists"
+      ];
+    default:
+      return [
+        "Remote work driving global rate standardization",
+        "Increasing demand for full-stack development skills",
+        "Growing emphasis on cross-cultural collaboration"
+      ];
+  }
+};
 
 export default function MarketTrends() {
   const [trends, setTrends] = useState<TrendData[]>([])
@@ -112,6 +149,7 @@ export default function MarketTrends() {
       
       const prompt = `
         Provide realistic hourly rates (not annual salaries) for different tech roles in ${location}.
+        Also include relevant market insights specific to ${location}.
         Rates should be in USD per hour, typically ranging from $20 to $250 per hour.
         Include only the following JSON data without any additional text or formatting:
         {
@@ -141,27 +179,31 @@ export default function MarketTrends() {
       
       const data = extractJSONFromText(text);
       
-      // Log normalized rates for debugging
-      console.log('Normalized rates:', data.rates);
-      
       const historicalData = generateHistoricalData(data.rates);
       setTrends(historicalData);
-      setMarketInsights(data.insights);
+      
+      // Combine AI-generated insights with location-specific insights
+      const locationInsights = generateLocationSpecificInsights(location);
+      const combinedInsights = [...(data.insights || []), ...locationInsights]
+        .filter((insight, index, self) => self.indexOf(insight) === index) // Remove duplicates
+        .slice(0, 5); // Limit to 5 insights
+      
+      setMarketInsights(combinedInsights);
       
     } catch (err) {
       console.error('Error fetching market rates:', err);
       setError('Failed to fetch market rates. Using fallback data.');
       const fallbackData = generateFallbackData();
       setTrends(fallbackData);
-      setMarketInsights([
-        "High demand for experienced DevOps engineers",
-        "UI/UX skills becoming more valuable",
-        "Data Science rates showing steady growth"
-      ]);
+      
+      // Use location-specific insights as fallback
+      const fallbackInsights = generateLocationSpecificInsights(location);
+      setMarketInsights(fallbackInsights);
     } finally {
       setLoading(false);
     }
   };
+
 
   // Add rate validation info to the UI
   const renderRateValidationInfo = () => (
@@ -298,23 +340,24 @@ export default function MarketTrends() {
     })
   }
 
+  
   return (
     <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-6 w-6" />
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />
               Market Trends
               {loading && <LoaderIcon className="h-4 w-4 animate-spin" />}
             </CardTitle>
-            <CardDescription>
-              Real-time freelance market rates powered by Gemini AI
+            <CardDescription className="text-sm sm:text-base">
+              Real-time freelance market rates powered by AI
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <Map className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Select location" />
               </SelectTrigger>
@@ -326,7 +369,7 @@ export default function MarketTrends() {
               </SelectContent>
             </Select>
             <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <Calendar className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Select timeframe" />
               </SelectTrigger>
@@ -346,10 +389,10 @@ export default function MarketTrends() {
         )}
         
         <Tabs defaultValue="chart" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="chart">Chart</TabsTrigger>
-            <TabsTrigger value="summary">Summary</TabsTrigger>
-            <TabsTrigger value="insights">Market Insights</TabsTrigger>
+          <TabsList className="flex flex-wrap justify-start gap-2">
+            <TabsTrigger value="chart" className="flex-grow sm:flex-grow-0">Chart</TabsTrigger>
+            <TabsTrigger value="summary" className="flex-grow sm:flex-grow-0">Summary</TabsTrigger>
+            <TabsTrigger value="insights" className="flex-grow sm:flex-grow-0">Market Insights</TabsTrigger>
           </TabsList>
           
           <TabsContent value="chart" className="space-y-4">
@@ -369,19 +412,73 @@ export default function MarketTrends() {
                 Area
               </Button>
             </div>
-            {renderChart()}
+            <div className="h-[300px] sm:h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                {selectedChart === 'line' ? (
+                  <LineChart data={trends}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fill: 'currentColor' }}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'currentColor' }}
+                      tickFormatter={formatCurrency}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    {Object.entries(chartColors).map(([key, color]) => (
+                      <Line
+                        key={key}
+                        type="monotone"
+                        dataKey={key}
+                        stroke={color}
+                        name={key.split(/(?=[A-Z])/).join(' ')}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    ))}
+                  </LineChart>
+                ) : (
+                  <AreaChart data={trends}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fill: 'currentColor' }}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'currentColor' }}
+                      tickFormatter={formatCurrency}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    {Object.entries(chartColors).map(([key, color]) => (
+                      <Area
+                        key={key}
+                        type="monotone"
+                        dataKey={key}
+                        stroke={color}
+                        fill={`${color}40`}
+                        name={key.split(/(?=[A-Z])/).join(' ')}
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </AreaChart>
+                )}
+              </ResponsiveContainer>
+            </div>
           </TabsContent>
           
           <TabsContent value="summary">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {calculateAverages()?.map(({ category, rate, change }) => (
                 <Card key={category}>
                   <CardHeader className="p-4">
-                    <CardTitle className="text-lg flex items-center gap-2">
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
                       {category.split(/(?=[A-Z])/).join(' ')}
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-sm">
                       Current Rate: {formatCurrency(rate)}
                       <span className={`ml-2 ${parseFloat(change) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         ({change}%)
@@ -395,27 +492,23 @@ export default function MarketTrends() {
 
           <TabsContent value="insights">
             <Card>
-            <CardContent className="pt-6">
-  <div className="space-y-4">
-    {Array.isArray(marketInsights) && marketInsights.length > 0 ? (
-      marketInsights.map((insight, index) => (
-        <div key={index} className="flex items-start gap-2">
-          <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
-          <p>{insight}</p>
-        </div>
-      ))
-    ) : (
-      <p>No insights available.</p> // Fallback message or loading indicator
-    )}
-  </div>
-</CardContent>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  {marketInsights.map((insight, index) => (
+                    <div key={index} className="flex items-start gap-2 bg-secondary/5 p-3 rounded-lg">
+                      <div className="h-2 w-2 mt-2 rounded-full bg-primary flex-shrink-0" />
+                      <p className="text-sm sm:text-base">{insight}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
 
-        <div className="mt-6 text-sm text-muted-foreground">
+        <div className="mt-6 text-xs sm:text-sm text-muted-foreground">
           <p>
-            * Rates are based on real-time market analysis powered by Gemini AI and may vary based on factors 
+            * Rates are based on real-time market analysis powered by AI and may vary based on factors 
             such as experience, skills, and specific project requirements.
           </p>
           {renderRateValidationInfo()}

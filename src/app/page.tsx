@@ -8,17 +8,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowRight, DollarSign, TrendingUp, Users, BarChart4, Menu } from 'lucide-react'
+import { ArrowRight, DollarSign, TrendingUp, Users, BarChart4, Menu, Calculator, CheckCircle } from 'lucide-react'
+import Link from 'next/link';
 
 const FeatureCard = ({ icon: Icon, title, description }) => (
-  <Card className="bg-gradient-to-br from-primary/10 to-primary/5 shadow-lg transition-transform transform hover:scale-105 h-full">
-    <CardHeader className="flex items-center space-x-3">
-      <Icon className="w-10 h-10 text-primary" />
-      <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+  <Card className="h-full bg-gradient-to-br from-primary/10 to-primary/5">
+    <CardHeader>
+      <Icon className="w-10 h-10 text-primary mb-2" />
+      <CardTitle className="text-xl mb-2">{title}</CardTitle>
+      <CardDescription>{description}</CardDescription>
     </CardHeader>
-    <CardContent>
-      <CardDescription className="text-sm">{description}</CardDescription>
-    </CardContent>
   </Card>
 )
 
@@ -48,6 +47,8 @@ const AnimatedSection = ({ children }) => {
   )
 }
 
+
+
 export default function LandingPage() {
   const [email, setEmail] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -58,11 +59,39 @@ export default function LandingPage() {
     setEmail('')
   }
 
+  const features = [
+    {
+      icon: Calculator,
+      title: "Rate Calculator",
+      description: "Determine your optimal freelance rate based on industry standards and personal factors."
+    },
+    {
+      icon: TrendingUp,
+      title: "Market Trends",
+      description: "Stay informed with real-time freelance market rates powered by AI."
+    },
+    {
+      icon: DollarSign,
+      title: "Budget Comparison",
+      description: "Compare client budgets with market rates to ensure fair compensation."
+    },
+    {
+      icon: BarChart4,
+      title: "Income Tracker",
+      description: "Monitor your freelance income and expenses with powerful visualization tools."
+    },
+    {
+      icon: CheckCircle,
+      title: "Optimization Tips",
+      description: "Get expert advice on how to increase your freelance rates and improve your business."
+    }
+  ]
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
       <header className="container mx-auto px-4 py-4 sm:py-8">
         <nav className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary">Expensify</h1>
+          <h1 className="text-4xl font-bold text-primary">Expensify</h1>
           <div className="hidden sm:flex space-x-4">
             <Button variant="ghost">Features</Button>
             <Button variant="ghost">Pricing</Button>
@@ -92,11 +121,13 @@ export default function LandingPage() {
               Calculate Your Worth
             </h2>
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-6 sm:mb-8">
-              Set competitive freelance rates with data-driven insights
+              Set competitive freelance rates with data-driven insights <br />on market trends, client budgets, income, expenses, and financial goals
             </p>
-            <Button size="lg" className="text-base sm:text-lg px-6 py-3 sm:px-8 sm:py-6 bg-primary text-white hover:bg-primary-dark">
-              Try It Now <ArrowRight className="ml-2" />
-            </Button>
+            <Link href="/home"> 
+      <Button size="lg" className="text-base sm:text-lg px-6 py-3 sm:px-8 sm:py-6 bg-primary text-white hover:bg-primary-dark">
+        Try It Now <ArrowRight className="ml-2" />
+      </Button>
+    </Link>
           </section>
         </AnimatedSection>
 
@@ -105,14 +136,14 @@ export default function LandingPage() {
             <div>
               <h3 className="text-2xl sm:text-3xl font-bold mb-4">Why Use Expensify</h3>
               <p className="text-base sm:text-lg text-muted-foreground mb-4">
-                Our Platform considers multiple factors to suggest the perfect rate for your freelance services:
+              Expensify offers a comprehensive platform tailored to help freelancers optimize their earnings. Here's why it's the perfect tool for you:
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                <li>Industry standards and current market trends</li>
-                <li>Your experience level and skill set</li>
-                <li>Geographic location and cost of living</li>
-                <li>Project complexity and duration</li>
-                <li>Your financial goals and business expenses</li>
+                <li>Calculate your freelance rate based on skill level, location, experience, and financial goals.</li>
+                <li>Stay updated with real-time freelance rates.</li>
+                <li>Compare client budgets to regional rates instantly</li>
+                <li>Track income and expenses effortlessly</li>
+                <li>Get expert advice to boost your rates</li>
               </ul>
             </div>
             <div className="relative mt-8 md:mt-0">
@@ -141,78 +172,53 @@ export default function LandingPage() {
         </AnimatedSection>
 
         <AnimatedSection>
-          <section className="mb-12 sm:mb-16">
-            <h3 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">Key Features</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <FeatureCard
-                icon={DollarSign}
-                title="Advanced Rate Calculator"
-                description="Calculate your ideal freelance rate based on your skills, experience, and expenses."
-              />
-              <FeatureCard
-                icon={TrendingUp}
-                title="Real-time Market Trends"
-                description="Stay informed with AI-powered insights on freelance market rates and demands."
-              />
-              <FeatureCard
-                icon={Users}
-                title="Client Budget Analyzer"
-                description="Evaluate client budgets against market rates and your personal financial goals."
-              />
-              <FeatureCard
-                icon={BarChart4}
-                title="Comprehensive Income Tracker"
-                description="Monitor your freelance income and expenses with powerful visualization tools."
-              />
+          <section className="mb-16">
+            <h3 className="text-3xl font-bold text-center mb-8">Our Tools</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {features.map((feature, index) => (
+                <FeatureCard key={index} {...feature} />
+              ))}
             </div>
           </section>
         </AnimatedSection>
 
         <AnimatedSection>
-          <section className="mb-12 sm:mb-16">
-            <h3 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">What Our Users Say</h3>
-            <Tabs defaultValue="testimonial1" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="testimonial1">Sarah K.</TabsTrigger>
-                <TabsTrigger value="testimonial2">Michael R.</TabsTrigger>
-                <TabsTrigger value="testimonial3">Emily T.</TabsTrigger>
-              </TabsList>
-              <TabsContent value="testimonial1">
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Sarah K.</CardTitle>
-                    <CardDescription>Graphic Designer</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    "FreelanceRateCalc helped me realize I was undercharging for my services. After adjusting my rates, I'm earning 30% more without losing clients!"
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="testimonial2">
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Michael R.</CardTitle>
-                    <CardDescription>Web Developer</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    "The market insights provided by this tool are invaluable. I feel much more confident in my pricing decisions now."
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="testimonial3">
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle>Emily T.</CardTitle>
-                    <CardDescription>Content Writer</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    "I love the easy-to-use interface! It’s made managing my freelance income and rates a breeze."
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </section>
-        </AnimatedSection>
+  <section className="mb-12 sm:mb-16">
+    <h3 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">What Our Users Say</h3>
+    <div className="space-y-6">
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Sarah K.</CardTitle>
+          <CardDescription>Graphic Designer</CardDescription>
+        </CardHeader>
+        <CardContent>
+          "Expensify helped me realize I was undercharging for my services. After adjusting my rates, I'm earning 30% more without losing clients!"
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Michael R.</CardTitle>
+          <CardDescription>Web Developer</CardDescription>
+        </CardHeader>
+        <CardContent>
+          "The market insights provided by this tool are invaluable. I feel much more confident in my pricing decisions now."
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Emily T.</CardTitle>
+          <CardDescription>Content Writer</CardDescription>
+        </CardHeader>
+        <CardContent>
+          "I love the easy-to-use interface! It’s made managing my freelance income and rates a breeze."
+        </CardContent>
+      </Card>
+    </div>
+  </section>
+</AnimatedSection>
+
 
         <AnimatedSection>
           <section className="text-center mb-12 sm:mb-16">

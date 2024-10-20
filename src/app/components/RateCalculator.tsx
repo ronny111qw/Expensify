@@ -27,6 +27,7 @@ interface SavedCalculation {
     taxRate: string;
     nonBillableHours: string;
     currency: string;
+    selectedSkills: string[];
   };
   results: {
     hourly: number;
@@ -37,7 +38,81 @@ interface SavedCalculation {
   date: string;
 }
 
-// Currency data with symbols and conversion rates (relative to USD)
+// Industry-specific data with base rates and multipliers
+const industryData = {
+  "web_development": {
+    baseRate: 75,
+    multiplier: 1.2,
+    description: "Web development rates typically higher due to technical complexity",
+    skills: ["Frontend", "Backend", "Full Stack", "DevOps", "CMS"]
+  },
+  "mobile_development": {
+    baseRate: 85,
+    multiplier: 1.3,
+    description: "Mobile development commands premium rates due to platform expertise",
+    skills: ["iOS", "Android", "Cross-Platform", "Native", "Hybrid"]
+  },
+  "ui_ux_design": {
+    baseRate: 65,
+    multiplier: 1.1,
+    description: "UI/UX design rates reflect creative and technical skills",
+    skills: ["UI Design", "UX Research", "Prototyping", "Design Systems", "User Testing"]
+  },
+  "graphic_design": {
+    baseRate: 55,
+    multiplier: 1.0,
+    description: "Graphic design rates vary based on complexity and experience",
+    skills: ["Brand Design", "Print", "Digital", "Motion Graphics", "Illustration"]
+  },
+  "content_writing": {
+    baseRate: 45,
+    multiplier: 0.9,
+    description: "Content writing rates depend on expertise and research depth",
+    skills: ["Technical Writing", "Creative Writing", "Copywriting", "SEO Writing", "Editing"]
+  },
+  "digital_marketing": {
+    baseRate: 65,
+    multiplier: 1.1,
+    description: "Digital marketing rates reflect ROI potential",
+    skills: ["SEO", "PPC", "Social Media", "Email Marketing", "Analytics"]
+  },
+  "consulting": {
+    baseRate: 150,
+    multiplier: 1.5,
+    description: "Consulting commands premium rates due to expertise value",
+    skills: ["Strategy", "Technical", "Business", "Financial", "Operations"]
+  },
+  "photography": {
+    baseRate: 75,
+    multiplier: 1.0,
+    description: "Photography rates vary by specialization and equipment",
+    skills: ["Portrait", "Commercial", "Event", "Product", "Aerial"]
+  },
+  "video_production": {
+    baseRate: 85,
+    multiplier: 1.2,
+    description: "Video production rates reflect equipment and expertise",
+    skills: ["Filming", "Editing", "Animation", "Color Grading", "Sound Design"]
+  },
+  "other": {
+    baseRate: 60,
+    multiplier: 1.0,
+    description: "General freelance services",
+    skills: ["Project Management", "Virtual Assistance", "Customer Service", "Data Entry", "Research"]
+  }
+}
+
+const locations = {
+  "North America": 1.2,
+  "Western Europe": 1.1,
+  "Asia Pacific": 0.9,
+  "Eastern Europe": 0.85,
+  "Latin America": 0.8,
+  "South Asia": 0.75,
+  "Africa": 0.75,
+  "Other": 1.0
+}
+
 const currencies = {
   USD: { symbol: '$', rate: 1, name: 'US Dollar' },
   EUR: { symbol: '€', rate: 0.91, name: 'Euro' },
@@ -67,30 +142,13 @@ export default function RateCalculator() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([])
   const [savedCalculations, setSavedCalculations] = useState<SavedCalculation[]>([])
-
-  const industries = [
-    "Web Development",
-    "Mobile Development",
-    "UI/UX Design",
-    "Graphic Design",
-    "Content Writing",
-    "Digital Marketing",
-    "Consulting",
-    "Photography",
-    "Video Production",
-    "Other"
-  ]
-
-  const locations = {
-    "North America": 1.2,
-    "Western Europe": 1.1,
-    "Asia Pacific": 0.9,
-    "Eastern Europe": 0.85,
-    "Latin America": 0.8,
-    "South Asia": 0.75,
-    "Africa": 0.75,
-    "Other": 1.0
-  }
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [industryInfo, setIndustryInfo] = useState<{
+    baseRate: number;
+    multiplier: number;
+    description: string;
+    skills: string[];
+  } | null>(null)
 
   useEffect(() => {
     // Load saved calculations from localStorage
@@ -99,6 +157,14 @@ export default function RateCalculator() {
       setSavedCalculations(JSON.parse(saved))
     }
   }, [])
+
+  useEffect(() => {
+    if (industry) {
+      const info = industryData[industry as keyof typeof industryData]
+      setIndustryInfo(info)
+      setSelectedSkills([])
+    }
+  }, [industry])
 
   const validateInputs = () => {
     const newErrors: Record<string, string> = {}
@@ -119,7 +185,7 @@ export default function RateCalculator() {
   const formatCurrency = (amount: number, currencyCode: string) => {
     if (!currencies[currencyCode as keyof typeof currencies]) {
       console.error(`Invalid currency code: ${currencyCode}`);
-      return amount.toFixed(2); // Fallback without currency symbol
+      return amount.toFixed(2);
     }
   
     const curr = currencies[currencyCode as keyof typeof currencies];
@@ -127,7 +193,7 @@ export default function RateCalculator() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
-  };
+  }
 
   const calculateRate = () => {
     if (!validateInputs()) return
@@ -136,6 +202,9 @@ export default function RateCalculator() {
     const costs = parseFloat(businessCosts) || 0
     const tax = (parseFloat(taxRate) || 0) / 100
     const nonBillable = parseFloat(nonBillableHours) || 0
+
+    // Get industry-specific multiplier
+    const industryMultiplier = industryData[industry as keyof typeof industryData]?.multiplier || 1.0
 
     // Calculate total required income
     const totalCosts = desiredIncome + costs + (desiredIncome * tax)
@@ -164,20 +233,28 @@ export default function RateCalculator() {
     // Location multiplier
     const locationMultiplier = locations[location as keyof typeof locations] || 1.0
 
-    const hourlyRate = (totalCosts / billableHours) * skillMultiplier * experienceMultiplier * locationMultiplier
-    const monthly = hourlyRate * (160 - (nonBillable * 4)) // Adjusted for non-billable hours per month
+    // Selected skills bonus (each additional skill adds 5% to the rate)
+    const skillsBonus = 1 + (selectedSkills.length * 0.05)
+
+    const hourlyRate = (totalCosts / billableHours) * 
+                      skillMultiplier * 
+                      experienceMultiplier * 
+                      locationMultiplier * 
+                      industryMultiplier *
+                      skillsBonus
+
+    const monthly = hourlyRate * (160 - (nonBillable * 4))
     const daily = hourlyRate * 8
 
     setCalculatedRate(Math.round(hourlyRate * 100) / 100)
     setMonthlyRate(Math.round(monthly * 100) / 100)
     setDailyRate(Math.round(daily * 100) / 100)
 
-    // Update rate history
     const newHistory = [...rateHistory, {
       date: new Date().toLocaleDateString(),
       rate: Math.round(hourlyRate * 100) / 100,
       currency
-    }].slice(-10) // Keep only last 10 calculations
+    }].slice(-10)
     setRateHistory(newHistory)
   }
 
@@ -194,7 +271,8 @@ export default function RateCalculator() {
         businessCosts,
         taxRate,
         nonBillableHours,
-        currency
+        currency,
+        selectedSkills
       },
       results: {
         hourly: calculatedRate,
@@ -220,6 +298,7 @@ export default function RateCalculator() {
     setTaxRate(calc.inputs.taxRate)
     setNonBillableHours(calc.inputs.nonBillableHours)
     setCurrency(calc.inputs.currency)
+    setSelectedSkills(calc.inputs.selectedSkills)
     setCalculatedRate(calc.results.hourly)
     setDailyRate(calc.results.daily)
     setMonthlyRate(calc.results.monthly)
@@ -235,16 +314,23 @@ export default function RateCalculator() {
     setTaxRate('')
     setNonBillableHours('')
     setCurrency('USD')
+    setSelectedSkills([])
     setCalculatedRate(null)
     setMonthlyRate(null)
     setDailyRate(null)
     setErrors({})
   }
 
+  const deleteCalculation = (index: number) => {
+    const updatedCalculations = savedCalculations.filter((_, i) => i !== index)
+    setSavedCalculations(updatedCalculations)
+    localStorage.setItem('savedCalculations', JSON.stringify(updatedCalculations))
+  }
+
   const exportToCSV = () => {
     if (savedCalculations.length === 0) return
 
-    const headers = ['Date', 'Hourly Rate', 'Daily Rate', 'Monthly Rate', 'Currency', 'Skill Level', 'Industry', 'Location']
+    const headers = ['Date', 'Hourly Rate', 'Daily Rate', 'Monthly Rate', 'Currency', 'Skill Level', 'Industry', 'Location', 'Selected Skills']
     const csvContent = [
       headers.join(','),
       ...savedCalculations.map(calc => 
@@ -256,7 +342,8 @@ export default function RateCalculator() {
           calc.results.currency,
           calc.inputs.skillLevel,
           calc.inputs.industry,
-          calc.inputs.location
+          calc.inputs.location,
+          calc.inputs.selectedSkills.join(';')
         ].join(',')
       )
     ].join('\n')
@@ -268,325 +355,331 @@ export default function RateCalculator() {
     link.click()
   }
 
-  const renderRateHistory = () => {
-    if (rateHistory.length === 0) return null
+  const renderIndustrySection = () => {
+    if (!industryInfo) return null;
 
     return (
-      <div className="h-64 w-full mt-4">
-        <ResponsiveContainer>
-          <LineChart data={rateHistory}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip formatter={(value, name) => [`${formatCurrency(Number(value), currency)}`, 'Rate']} />
-            <Line type="monotone" dataKey="rate" stroke="#2563eb" />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    )
-  }
-
-  const renderRateCard = () => {
-    if (calculatedRate === null) return null
-    
-    return (
-      <div className="space-y-4 bg-secondary/10 p-4 rounded-lg">
-        <div className="grid grid-cols-3 gap-4">
+      <div className="col-span-2 mt-4 p-4 bg-secondary/5 rounded-lg">
+        <h3 className="text-lg font-semibold mb-2">Industry Information</h3>
+        <p className="text-sm text-muted-foreground mb-2">{industryInfo.description}</p>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Base Rate: {formatCurrency(industryInfo.baseRate, currency)}</p>
           <div>
-            <p className="text-sm text-muted-foreground">Hourly Rate</p>
-            <p className="text-2xl font-bold text-primary">{formatCurrency(calculatedRate, currency)}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Daily Rate</p>
-            <p className="text-2xl font-bold text-primary">{formatCurrency(dailyRate!, currency)}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Monthly Rate</p>
-            <p className="text-2xl font-bold text-primary">{formatCurrency(monthlyRate!, currency)}</p>
-          </div>
-        </div>
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            These rates include your tax obligations and business costs while accounting for non-billable hours.
-            Rates shown in {currencies[currency as keyof typeof currencies].name}.
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
-
-  const deleteCalculation = (index : number) => {
-    const updatedCalculations = savedCalculations.filter((_, i) => i !== index)
-    setSavedCalculations(updatedCalculations)
-    localStorage.setItem('savedCalculations', JSON.stringify(updatedCalculations))
-  }
-
-
-
-  return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calculator className="h-6 w-6" />
-          International Rate Calculator
-        </CardTitle>
-        <CardDescription>Calculate your ideal freelance rate in your local currency based on your skills, experience, and expenses</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="currency">Currency</Label>
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger id="currency">
-                <SelectValue placeholder="Select Currency" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(currencies).map(([code, { name, symbol }]) => (
-                  <SelectItem key={code} value={code}>
-                    {symbol} - {code} ({name})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="skillLevel">Skill Level {errors.skillLevel && <span className="text-destructive text-sm">*</span>}</Label>
-            <Select value={skillLevel} onValueChange={setSkillLevel}>
-              <SelectTrigger id="skillLevel" className={errors.skillLevel ? "border-destructive" : ""}>
-                <SelectValue placeholder="Select Skill Level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="beginner">Beginner</SelectItem>
-                <SelectItem value="intermediate">Intermediate</SelectItem>
-                <SelectItem value="expert">Expert</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.skillLevel && <p className="text-destructive text-sm">{errors.skillLevel}</p>}
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="industry">Industry {errors.industry && <span className="text-destructive text-sm">*</span>}</Label>
-            <Select value={industry} onValueChange={setIndustry}>
-              <SelectTrigger id="industry" className={errors.industry ? "border-destructive" : ""}>
-                <SelectValue placeholder="Select Industry" />
-              </SelectTrigger>
-              <SelectContent>
-              {industries.map((ind) => (
-                  <SelectItem key={ind} value={ind.toLowerCase()}>{ind}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.industry && <p className="text-destructive text-sm">{errors.industry}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Select value={location} onValueChange={setLocation}>
-              <SelectTrigger id="location">
-                <SelectValue placeholder="Select Location" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(locations).map((loc) => (
-                  <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="experience">Years of Experience</Label>
-            <Input 
-              id="experience" 
-              type="number" 
-              min="0"
-              max="50"
-              value={experience} 
-              onChange={(e) => setExperience(e.target.value)} 
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="annualIncome">
-              Desired Annual Income {errors.annualIncome && <span className="text-destructive text-sm">*</span>}
-            </Label>
-            <div className="relative">
-              <Input 
-                id="annualIncome" 
-                type="number" 
-                min="0"
-                value={annualIncome} 
-                onChange={(e) => setAnnualIncome(e.target.value)}
-                className={`pl-8 ${errors.annualIncome ? "border-destructive" : ""}`}
-              />
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground">
-                {currencies[currency as keyof typeof currencies].symbol}
-              </span>
-            </div>
-            {errors.annualIncome && <p className="text-destructive text-sm">{errors.annualIncome}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="businessCosts">Annual Business Costs</Label>
-            <div className="relative">
-              <Input 
-                id="businessCosts" 
-                type="number" 
-                min="0"
-                value={businessCosts} 
-                onChange={(e) => setBusinessCosts(e.target.value)} 
-                className="pl-8"
-              />
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground">
-                {currencies[currency as keyof typeof currencies].symbol}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="taxRate">
-              Tax Rate (%) {errors.taxRate && <span className="text-destructive text-sm">*</span>}
-            </Label>
-            <Input 
-              id="taxRate" 
-              type="number" 
-              min="0"
-              max="100"
-              value={taxRate} 
-              onChange={(e) => setTaxRate(e.target.value)}
-              className={errors.taxRate ? "border-destructive" : ""}
-            />
-            {errors.taxRate && <p className="text-destructive text-sm">{errors.taxRate}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="nonBillableHours">
-              Non-Billable Hours per Week {errors.nonBillableHours && <span className="text-destructive text-sm">*</span>}
-            </Label>
-            <Input 
-              id="nonBillableHours" 
-              type="number" 
-              min="0"
-              max="40"
-              value={nonBillableHours} 
-              onChange={(e) => setNonBillableHours(e.target.value)}
-              className={errors.nonBillableHours ? "border-destructive" : ""}
-            />
-            {errors.nonBillableHours && <p className="text-destructive text-sm">{errors.nonBillableHours}</p>}
-          </div>
-        </div>
-
-        {/* Saved Calculations Section */}
-        {savedCalculations.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Saved Calculations</h3>
-            <div className="space-y-2">
-              {savedCalculations.map((calc, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-secondary/5 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">
-                      {new Date(calc.date).toLocaleDateString()} - 
-                      {formatCurrency(calc.results.hourly, calc.results.currency)}/hr
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {calc.inputs.industry} ({calc.inputs.skillLevel}) - {calc.results.currency}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => loadCalculation(calc)}
-                  >
-                    Load
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteCalculation(index)}
-                    className="hover:bg-red-100 hover:text-red-600"
-                  >
-                     <Trash2 className="w-4 h-4" />
-                  </Button>
-
-                </div>
+            <Label className="text-sm font-medium">Select Relevant Skills:</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {industryInfo.skills.map((skill) => (
+                <Button
+                  key={skill}
+                  variant={selectedSkills.includes(skill) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setSelectedSkills(prev =>
+                      prev.includes(skill)
+                        ? prev.filter(s => s !== skill)
+                        : [...prev, skill]
+                    )
+                  }}
+                >
+                  {skill}
+                </Button>
               ))}
             </div>
           </div>
-        )}
-      </CardContent>
-
-      <CardFooter className="flex flex-col gap-4">
-        <div className="flex gap-2 w-full">
-          <Button 
-            onClick={calculateRate} 
-            className="flex-1"
-            size="lg"
-          >
-            <Calculator className="w-4 h-4 mr-2" />
-            Calculate Rate
-          </Button>
-          
-          <Button
-            onClick={saveCalculation}
-            variant="outline"
-            disabled={calculatedRate === null}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Save
-          </Button>
-
-          <Button
-            onClick={exportToCSV}
-            variant="outline"
-            disabled={savedCalculations.length === 0}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-
-          <Button
-            onClick={resetForm}
-            variant="outline"
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Reset
-          </Button>
         </div>
+      </div>
+    )
+  }
 
-        {renderRateCard()}
-        {renderRateHistory()}
+  return (
+    <div className="container mx-auto p-4 max-w-4xl">
+      <Card>
+        <CardHeader>
+          <CardTitle>Freelance Rate Calculator</CardTitle>
+          <CardDescription>Calculate your optimal freelance rates based on industry standards and personal factors</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="skillLevel">Skill Level</Label>
+              <Select value={skillLevel} onValueChange={setSkillLevel}>
+                <SelectTrigger id="skillLevel">
+                  <SelectValue placeholder="Select skill level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="expert">Expert</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.skillLevel && (
+                <span className="text-sm text-red-500">{errors.skillLevel}</span>
+              )}
+            </div>
 
-        {/* Market Rate Comparison */}
-        {calculatedRate && (
-          <div className="w-full p-4 bg-secondary/5 rounded-lg mt-4">
-            <h3 className="text-lg font-semibold mb-2">Market Rate Analysis</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-3 bg-white rounded-lg shadow-sm">
-                <p className="text-sm text-muted-foreground">Industry Average</p>
-                <p className="text-xl font-bold">
-                  {formatCurrency(calculatedRate * 0.8, currency)} - {formatCurrency(calculatedRate * 1.2, currency)}
-                </p>
-                <p className="text-xs text-muted-foreground">per hour</p>
-              </div>
-              <div className="p-3 bg-white rounded-lg shadow-sm">
-                <p className="text-sm text-muted-foreground">Your Position</p>
-                <p className="text-xl font-bold text-green-600">
-                  {calculatedRate > (calculatedRate * 0.8) ? 'Above Average' : 'Competitive'}
-                </p>
-                <p className="text-xs text-muted-foreground">market position</p>
-              </div>
-              <div className="p-3 bg-white rounded-lg shadow-sm">
-                <p className="text-sm text-muted-foreground">Potential Annual</p>
-                <p className="text-xl font-bold">
-                  {formatCurrency(calculatedRate * (40 - parseFloat(nonBillableHours)) * 52, currency)}
-                </p>
-                <p className="text-xs text-muted-foreground">maximum earnings</p>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="industry">Industry</Label>
+              <Select value={industry} onValueChange={(value) => {
+                setIndustry(value);
+                // Update selectedSkills when industry changes
+                const industryInfo = industryData[value as keyof typeof industryData];
+                if (industryInfo) {
+                  setSelectedSkills([industryInfo.skills[0]]); // Set first skill as default
+                }
+              }}>
+                <SelectTrigger id="industry">
+                  <SelectValue placeholder="Select industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(industryData).map((ind) => (
+                    <SelectItem key={ind} value={ind}>
+                      {ind.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.industry && (
+                <span className="text-sm text-red-500">{errors.industry}</span>
+              )}
+            </div>
+
+            
+
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Select value={location} onValueChange={setLocation}>
+                <SelectTrigger id="location">
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(locations).map((loc) => (
+                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="experience">Years of Experience</Label>
+              <Input
+                id="experience"
+                type="number"
+                value={experience}
+                onChange={(e) => setExperience(e.target.value)}
+                placeholder="Enter years of experience"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="currency">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="currency">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(currencies).map(([code, { name }]) => (
+                    <SelectItem key={code} value={code}>{code} - {name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="annualIncome">Desired Annual Income</Label>
+              <Input
+                id="annualIncome"
+                type="number"
+                value={annualIncome}
+                onChange={(e) => setAnnualIncome(e.target.value)}
+                placeholder="Enter desired annual income"
+              />
+              {errors.annualIncome && (
+                <span className="text-sm text-red-500">{errors.annualIncome}</span>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="businessCosts">Annual Business Costs</Label>
+              <Input
+                id="businessCosts"
+                type="number"
+                value={businessCosts}
+                onChange={(e) => setBusinessCosts(e.target.value)}
+                placeholder="Enter annual business costs"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="taxRate">Tax Rate (%)</Label>
+              <Input
+                id="taxRate"
+                type="number"
+                value={taxRate}
+                onChange={(e) => setTaxRate(e.target.value)}
+                placeholder="Enter tax rate percentage"
+              />
+              {errors.taxRate && (
+                <span className="text-sm text-red-500">{errors.taxRate}</span>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nonBillableHours">Non-Billable Hours per Week</Label>
+              <Input
+                id="nonBillableHours"
+                type="number"
+                value={nonBillableHours}
+                onChange={(e) => setNonBillableHours(e.target.value)}
+                placeholder="Enter non-billable hours"
+              />
+              {errors.nonBillableHours && (
+                <span className="text-sm text-red-500">{errors.nonBillableHours}</span>
+              )}
             </div>
           </div>
-        )}
-      </CardFooter>
-    </Card>
+
+       
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-end">
+            <Button variant="outline" onClick={resetForm} className="w-full sm:w-auto">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset
+            </Button>
+            <Button onClick={calculateRate} className="w-full sm:w-auto">
+              <Calculator className="w-4 h-4 mr-2" />
+              Calculate Rate
+            </Button>
+          </div>
+
+          {calculatedRate !== null && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg sm:text-xl">Calculated Rates</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 bg-primary/5 rounded-lg text-center">
+                    <p className="text-sm text-muted-foreground">Hourly Rate</p>
+                    <p className="text-xl sm:text-2xl font-bold">{formatCurrency(calculatedRate, currency)}</p>
+                  </div>
+                  <div className="p-4 bg-primary/5 rounded-lg text-center">
+                    <p className="text-sm text-muted-foreground">Daily Rate (8 hours)</p>
+                    <p className="text-xl sm:text-2xl font-bold">{formatCurrency(dailyRate!, currency)}</p>
+                  </div>
+                  <div className="p-4 bg-primary/5 rounded-lg text-center">
+                    <p className="text-sm text-muted-foreground">Monthly Rate</p>
+                    <p className="text-xl sm:text-2xl font-bold">{formatCurrency(monthlyRate!, currency)}</p>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-4">Rate History</h3>
+                  <div className="h-[200px] sm:h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={rateHistory}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="rate" stroke="#2563eb" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4">
+                  <Button onClick={saveCalculation} className="w-full sm:w-auto">
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Calculation
+                  </Button>
+                  {savedCalculations.length > 0 && (
+                    <Button variant="outline" onClick={exportToCSV} className="w-full sm:w-auto">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export to CSV
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {savedCalculations.length > 0 && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg sm:text-xl">Saved Calculations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {savedCalculations.map((calc, index) => (
+                    <Card key={index} className="p-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                        <div className="w-full">
+                          <h4 className="font-semibold">
+                            {calc.inputs.industry.split('_').map(word => 
+                              word.charAt(0).toUpperCase() + word.slice(1)
+                            ).join(' ')}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(calc.date).toLocaleDateString()}
+                          </p>
+                          <div className="mt-2 grid grid-cols-3 gap-2 sm:gap-4">
+                            <div>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Hourly</p>
+                              <p className="text-sm sm:text-base font-medium">
+                                {formatCurrency(calc.results.hourly, calc.results.currency)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Daily</p>
+                              <p className="text-sm sm:text-base font-medium">
+                                {formatCurrency(calc.results.daily, calc.results.currency)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Monthly</p>
+                              <p className="text-sm sm:text-base font-medium">
+                                {formatCurrency(calc.results.monthly, calc.results.currency)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
+                              Skills: {calc.inputs.selectedSkills.join(', ')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 w-full sm:w-auto justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => loadCalculation(calc)}
+                          >
+                            <Info className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => deleteCalculation(index)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Alert className="bg-secondary/10">
+            <AlertDescription className="text-xs sm:text-sm text-muted-foreground">
+              <Info className="w-4 h-4 inline-block mr-2" />
+              Rates are calculated based on industry standards, location, experience, and your specific requirements.
+            </AlertDescription>
+          </Alert>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }
