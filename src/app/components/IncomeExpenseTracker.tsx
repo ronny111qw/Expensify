@@ -44,17 +44,6 @@ const CURRENCIES = [
   { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' }
 ]
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-const formatTooltipValue = (value: number | string | undefined, name: string | number): [string, string | number] => {
-  if (typeof name === 'string' && name.includes('(') && name.includes(')')) {
-    const currency = name.split('(')[1].split(')')[0].trim()
-    return [formatAmount(value as number, currency), name]
-  }
-  return [value?.toString() || '0', name]
-}
-/* eslint-enable @typescript-eslint/no-unused-vars */
-
-
 export default function IncomeExpenseTracker() {
   const [formData, setFormData] = useState({
     type: 'income' as 'income' | 'expense',
@@ -397,16 +386,11 @@ export default function IncomeExpenseTracker() {
                           ))}
                         </Pie>
                         <Tooltip 
-  formatter={(value, name) => {
-    if (typeof name === 'string') {
-      return [
-        formatAmount(value as number, name.split('(')[1].split(')')[0].trim()), 
-        name
-      ]
-    }
-    return [formatAmount(value as number, ''), name] // Return a fallback value if `name` isn't a string
-  }}
-/>
+                          formatter={(value, name) => [
+                            formatAmount(value as number, name.split('(')[1].split(')')[0].trim()), 
+                            name
+                          ]}
+                        />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -706,9 +690,10 @@ export default function IncomeExpenseTracker() {
                               />
                             ))}
                           </Pie>
-                          <Tooltip 
-    formatter={(value, name) => formatTooltipValue(value, name)}
-  />
+                          <Tooltip formatter={(value, name) => [
+                            formatAmount(value as number, name.split('(')[1].split(')')[0].trim()),
+                            name
+                          ]} />
                           <Legend />
                         </PieChart>
                       </ResponsiveContainer>
@@ -730,11 +715,14 @@ export default function IncomeExpenseTracker() {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis type="number" />
                           <YAxis dataKey="name" type="category" width={150} />
-                          
-                          
                           <Tooltip
-    formatter={(value, name) => formatTooltipValue(value, name)}
-  />
+                            formatter={(value, name) => {
+                              const formattedName = name && name.includes('(') && name.includes(')')
+                                ? name.split('(')[1].split(')')[0].trim()
+                                : name;
+                              return [formatAmount(value as number, formattedName), name];
+                            }}
+                          />
                           <Bar dataKey="value" fill="#8884d8">
                             {categoryData.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS.categories[index % COLORS.categories.length]} />
