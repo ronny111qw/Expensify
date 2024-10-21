@@ -11,19 +11,17 @@ import { Label } from "@/components/ui/label"
 import { ArrowRight, DollarSign, TrendingUp, BarChart4, Menu, Calculator, CheckCircle, LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 
-interface FeatureCardProps {
+type FeatureCardProps = {
   icon: LucideIcon;
   title: string;
   description: string;
 }
 
-interface Feature extends FeatureCardProps {}
-
-interface AnimatedSectionProps {
+type AnimatedSectionProps = {
   children: ReactNode;
 }
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => (
+const FeatureCard = ({ icon: Icon, title, description }: FeatureCardProps) => (
   <Card className="h-full bg-gradient-to-br from-primary/10 to-primary/5">
     <CardHeader>
       <Icon className="w-10 h-10 text-primary mb-2" />
@@ -33,7 +31,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, descriptio
   </Card>
 )
 
-const AnimatedSection: React.FC<AnimatedSectionProps> = ({ children }) => {
+const AnimatedSection = ({ children }: AnimatedSectionProps) => {
   const controls = useAnimation()
   const [ref, inView] = useInView()
 
@@ -59,7 +57,7 @@ const AnimatedSection: React.FC<AnimatedSectionProps> = ({ children }) => {
   )
 }
 
-const features: Feature[] = [
+const features: FeatureCardProps[] = [
   {
     icon: Calculator,
     title: "Rate Calculator",
@@ -87,7 +85,7 @@ const features: Feature[] = [
   }
 ]
 
-const LandingPage: React.FC = () => {
+const LandingPage = () => {
   const [email, setEmail] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
 
