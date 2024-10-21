@@ -1,16 +1,29 @@
+// LandingPage.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ReactNode } from 'react'
 import { motion, useAnimation } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowRight, DollarSign, TrendingUp, BarChart4, Menu, Calculator, CheckCircle } from 'lucide-react'
-import Link from 'next/link';
+import { ArrowRight, DollarSign, TrendingUp, BarChart4, Menu, Calculator, CheckCircle, LucideIcon } from 'lucide-react'
+import Link from 'next/link'
 
-const FeatureCard = ({ icon: Icon, title, description }) => (
+interface FeatureCardProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}
+
+interface Feature extends FeatureCardProps {}
+
+interface AnimatedSectionProps {
+  children: ReactNode;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => (
   <Card className="h-full bg-gradient-to-br from-primary/10 to-primary/5">
     <CardHeader>
       <Icon className="w-10 h-10 text-primary mb-2" />
@@ -20,7 +33,7 @@ const FeatureCard = ({ icon: Icon, title, description }) => (
   </Card>
 )
 
-const AnimatedSection = ({ children }) => {
+const AnimatedSection: React.FC<AnimatedSectionProps> = ({ children }) => {
   const controls = useAnimation()
   const [ref, inView] = useInView()
 
@@ -46,45 +59,43 @@ const AnimatedSection = ({ children }) => {
   )
 }
 
+const features: Feature[] = [
+  {
+    icon: Calculator,
+    title: "Rate Calculator",
+    description: "Determine your optimal freelance rate based on industry standards and personal factors."
+  },
+  {
+    icon: TrendingUp,
+    title: "Market Trends",
+    description: "Stay informed with real-time freelance market rates powered by AI."
+  },
+  {
+    icon: DollarSign,
+    title: "Budget Comparison",
+    description: "Compare client budgets with market rates to ensure fair compensation."
+  },
+  {
+    icon: BarChart4,
+    title: "Income Tracker",
+    description: "Monitor your freelance income and expenses with powerful visualization tools."
+  },
+  {
+    icon: CheckCircle,
+    title: "Optimization Tips",
+    description: "Get expert advice on how to increase your freelance rates and improve your business."
+  }
+]
 
-
-export default function LandingPage() {
+const LandingPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     console.log('Signed up with email:', email)
     setEmail('')
   }
-
-  const features = [
-    {
-      icon: Calculator,
-      title: "Rate Calculator",
-      description: "Determine your optimal freelance rate based on industry standards and personal factors."
-    },
-    {
-      icon: TrendingUp,
-      title: "Market Trends",
-      description: "Stay informed with real-time freelance market rates powered by AI."
-    },
-    {
-      icon: DollarSign,
-      title: "Budget Comparison",
-      description: "Compare client budgets with market rates to ensure fair compensation."
-    },
-    {
-      icon: BarChart4,
-      title: "Income Tracker",
-      description: "Monitor your freelance income and expenses with powerful visualization tools."
-    },
-    {
-      icon: CheckCircle,
-      title: "Optimization Tips",
-      description: "Get expert advice on how to increase your freelance rates and improve your business."
-    }
-  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
@@ -112,6 +123,7 @@ export default function LandingPage() {
           </div>
         )}
       </header>
+
       <main className="container mx-auto px-4 py-8 sm:py-16">
         <AnimatedSection>
           <section className="text-center mb-12 sm:mb-16">
@@ -121,11 +133,11 @@ export default function LandingPage() {
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-6 sm:mb-8">
               Set competitive freelance rates with data-driven insights <br />on market trends, client budgets, income, expenses, and financial goals
             </p>
-            <Link href="/home"> 
-      <Button size="lg" className="text-base sm:text-lg px-6 py-3 sm:px-8 sm:py-6 bg-primary text-white hover:bg-primary-dark">
-        Try It Now <ArrowRight className="ml-2" />
-      </Button>
-    </Link>
+            <Link href="/home">
+              <Button size="lg" className="text-base sm:text-lg px-6 py-3 sm:px-8 sm:py-6 bg-primary text-white hover:bg-primary-dark">
+                Try It Now <ArrowRight className="ml-2" />
+              </Button>
+            </Link>
           </section>
         </AnimatedSection>
 
@@ -134,7 +146,7 @@ export default function LandingPage() {
             <div>
               <h3 className="text-2xl sm:text-3xl font-bold mb-4">Why Use Expensify</h3>
               <p className="text-base sm:text-lg text-muted-foreground mb-4">
-              Expensify offers a comprehensive platform tailored to help freelancers optimize their earnings. Here&apos;s why it&apos;s the perfect tool for you:
+                Expensify offers a comprehensive platform tailored to help freelancers optimize their earnings. Here&apos;s why it&apos;s the perfect tool for you:
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li>Calculate your freelance rate based on skill level, location, experience, and financial goals.</li>
@@ -181,45 +193,6 @@ export default function LandingPage() {
         </AnimatedSection>
 
         <AnimatedSection>
-  <section className="mb-12 sm:mb-16">
-    <h3 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">What Our Users Say</h3>
-    <div className="space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Sarah K.</CardTitle>
-          <CardDescription>Graphic Designer</CardDescription>
-        </CardHeader>
-        <CardContent>
-        &quot;Expensify helped me realize I was undercharging for my services. After adjusting my rates, I&apos;m earning 30% more without losing clients!&quot;
-
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Michael R.</CardTitle>
-          <CardDescription>Web Developer</CardDescription>
-        </CardHeader>
-        <CardContent>
-        &quot;The market insights provided by this tool are invaluable. I feel much more confident in my pricing decisions now.&quot;
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Emily T.</CardTitle>
-          <CardDescription>Content Writer</CardDescription>
-        </CardHeader>
-        <CardContent>
-        &quot;I love the easy-to-use interface! It&rsquo;s made managing my freelance income and rates a breeze.&quot;
-        </CardContent>
-      </Card>
-    </div>
-  </section>
-</AnimatedSection>
-
-
-        <AnimatedSection>
           <section className="text-center mb-12 sm:mb-16">
             <h3 className="text-2xl sm:text-3xl font-bold mb-4">Stay Updated</h3>
             <p className="text-lg sm:text-xl text-muted-foreground mb-4">Join our mailing list to receive the latest tips and resources for freelancers.</p>
@@ -245,3 +218,5 @@ export default function LandingPage() {
     </div>
   )
 }
+
+export default LandingPage
