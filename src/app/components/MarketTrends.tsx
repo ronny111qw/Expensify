@@ -38,7 +38,7 @@ interface CustomTooltipProps {
   label?: string
 }
 
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '')
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY)
 
 const RATE_LIMITS = {
   min: 20,
@@ -169,7 +169,7 @@ export default function MarketTrends() {
     setError(null);
     
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const prompt = `
         Provide realistic hourly rates (not annual salaries) for different tech roles in ${location}.
