@@ -263,6 +263,35 @@ export default function IncomeExpenseTracker() {
       )
   }, [filteredTransactions])
 
+  // Custom tooltip formatters
+  const customPieTooltipFormatter = (value: number, name: string | number) => {
+    if (typeof name === 'string') {
+      const currencyMatch = name.match(/\((.*?)\)/);
+      const currency = currencyMatch ? currencyMatch[1].trim() : 'USD';
+      return [formatAmount(value, currency), name];
+    }
+    return [formatAmount(value, 'USD'), name.toString()];
+  };
+
+  const customCategoryTooltipFormatter = (value: number, name: string | number) => {
+    if (typeof name === 'string') {
+      const currencyMatch = name.match(/\((.*?)\)/);
+      const currency = currencyMatch ? currencyMatch[1].trim() : 'USD';
+      return [formatAmount(value, currency), name];
+    }
+    return [formatAmount(value, 'USD'), name.toString()];
+  };
+
+  const renderPieChartCell = (entry: { name: string | number; value: number }, index: number) => {
+    const entryName = typeof entry.name === 'string' ? entry.name : '';
+    return (
+      <Cell 
+        key={`cell-${index}`} 
+        fill={entryName.includes('Income') ? COLORS.income : COLORS.expense}
+      />
+    );
+  };
+
   return (
     <Card className="max-w-7xl mx-auto">
       <CardHeader>
@@ -378,36 +407,14 @@ export default function IncomeExpenseTracker() {
                           paddingAngle={5}
                           dataKey="value"
                         >
-                          {categoryData.map((_, index) => (
+                          {categoryData.map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
                               fill={COLORS.categories[index % COLORS.categories.length]} 
                             />
                           ))}
                         </Pie>
-                        <Tooltip
-  formatter={(value, name) => {
-    // Check if value is an array or not
-    const numericalValue = Array.isArray(value)
-      ? value[0] // or sum the values if that's appropriate
-      : value;
-
-    // Ensure numericalValue is a number
-    const finalValue = typeof numericalValue === 'string'
-      ? parseFloat(numericalValue) // convert string to number
-      : numericalValue;
-
-    // If finalValue is not a number, handle it accordingly (e.g., default to 0)
-    const safeValue = typeof finalValue === 'number' ? finalValue : 0;
-
-    // Format and return the desired output
-    return [
-      formatAmount(safeValue, name.split('(')[1].split(')')[0].trim()),
-      name
-    ];
-  }}
-/>
-
+                        <Tooltip formatter={customCategoryTooltipFormatter} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -463,8 +470,6 @@ export default function IncomeExpenseTracker() {
                         </Select>
                       </div>
                     </div>
-
-                    
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
@@ -700,17 +705,9 @@ export default function IncomeExpenseTracker() {
                             paddingAngle={5}
                             dataKey="value"
                           >
-                            {pieData.map((entry, index) => (
-                              <Cell 
-                                key={`cell-${index}`} 
-                                fill={entry.name.includes('Income') ? COLORS.income : COLORS.expense}
-                              />
-                            ))}
+                            {pieData.map((entry, index) => renderPieChartCell(entry, index))}
                           </Pie>
-                          <Tooltip formatter={(value, name) => [
-                            formatAmount(value as number, name.split('(')[1].split(')')[0].trim()),
-                            name
-                          ]} />
+                          <Tooltip formatter={customPieTooltipFormatter} />
                           <Legend />
                         </PieChart>
                       </ResponsiveContainer>
@@ -732,14 +729,7 @@ export default function IncomeExpenseTracker() {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis type="number" />
                           <YAxis dataKey="name" type="category" width={150} />
-                          <Tooltip
-                            formatter={(value, name) => {
-                              const formattedName = name && name.includes('(') && name.includes(')')
-                                ? name.split('(')[1].split(')')[0].trim()
-                                : name;
-                              return [formatAmount(value as number, formattedName), name];
-                            }}
-                          />
+                          <Tooltip formatter={customCategoryTooltipFormatter} />
                           <Bar dataKey="value" fill="#8884d8">
                             {categoryData.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS.categories[index % COLORS.categories.length]} />
