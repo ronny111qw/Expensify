@@ -38,7 +38,10 @@ interface CustomTooltipProps {
   label?: string
 }
 
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!)
+const getApiKey = () => process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+
+// Initialize genAI inside the component to ensure it's using the latest API key
+let genAI: GoogleGenerativeAI;
 
 const RATE_LIMITS = {
   min: 20,
@@ -164,13 +167,21 @@ export default function MarketTrends() {
     return data
   }, [selectedTimeframe])
 
+  useEffect(() => {
+    genAI = new GoogleGenerativeAI(getApiKey());
+  }, []);
+
   const fetchMarketRates = useCallback(async (location: string) => {
     setLoading(true);
     setError(null);
     
     try {
+      // Check if the API key is available
+      if (!getApiKey()) {
+        throw new Error('API key is not available');
+      }
+
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
       const prompt = `
         Provide realistic hourly rates (not annual salaries) for different tech roles in ${location}.
         Also include relevant market insights specific to ${location}.
@@ -224,6 +235,7 @@ export default function MarketTrends() {
       setLoading(false);
     }
   }, [generateHistoricalData])
+
 
   useEffect(() => {
     fetchMarketRates(selectedLocation)
