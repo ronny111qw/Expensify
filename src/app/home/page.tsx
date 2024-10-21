@@ -1,5 +1,4 @@
-"use client"
-
+'use client'
 import React from 'react'
 import { Calculator, TrendingUp, DollarSign, LineChart, Globe } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -22,30 +21,25 @@ export default function Component() {
           <CardContent>
             <Tabs defaultValue="calculator" className="space-y-4">
               <TabsList className="flex flex-wrap justify-start gap-2">
-                <TabsTrigger value="calculator" className="flex items-center text-xs sm:text-sm">
-                  <Calculator className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Calculator</span>
-                  <span className="sm:hidden">Calc</span>
+                <TabsTrigger value="calculator" className="flex items-center text-xs sm:text-sm p-2">
+                  <Calculator className="mr-1 h-4 w-4" />
+                  <span>Calc</span>
                 </TabsTrigger>
-                <TabsTrigger value="trends" className="flex items-center text-xs sm:text-sm">
-                  <TrendingUp className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Market Trends</span>
-                  <span className="sm:hidden">Trends</span>
+                <TabsTrigger value="trends" className="flex items-center text-xs sm:text-sm p-2">
+                  <TrendingUp className="mr-1 h-4 w-4" />
+                  <span>Trends</span>
                 </TabsTrigger>
-                <TabsTrigger value="budget" className="flex items-center text-xs sm:text-sm">
-                  <DollarSign className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Budget Comparison</span>
-                  <span className="sm:hidden">Budget</span>
+                <TabsTrigger value="budget" className="flex items-center text-xs sm:text-sm p-2">
+                  <DollarSign className="mr-1 h-4 w-4" />
+                  <span>Budget</span>
                 </TabsTrigger>
-                <TabsTrigger value="tracker" className="flex items-center text-xs sm:text-sm">
-                  <LineChart className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Income Tracker</span>
-                  <span className="sm:hidden">Income</span>
+                <TabsTrigger value="tracker" className="flex items-center text-xs sm:text-sm p-2">
+                  <LineChart className="mr-1 h-4 w-4" />
+                  <span>Income</span>
                 </TabsTrigger>
-                <TabsTrigger value="tips" className="flex items-center text-xs sm:text-sm">
-                  <Globe className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Optimization Tips</span>
-                  <span className="sm:hidden">Tips</span>
+                <TabsTrigger value="tips" className="flex items-center text-xs sm:text-sm p-2">
+                  <Globe className="mr-1 h-4 w-4" />
+                  <span>Tips</span>
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="calculator">
